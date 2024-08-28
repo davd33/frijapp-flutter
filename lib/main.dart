@@ -2,17 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:fridjapp_flutter/fridj.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+
+late Future<Database> db;
 
 void main() async {
-  // Avoid errors caused by flutter upgrade.
-  // Importing 'package:flutter/widgets.dart' is required.
+  const String fridjsDbFileName = "fridjs.db";
+
+  databaseFactory = databaseFactoryFfiWeb;
   WidgetsFlutterBinding.ensureInitialized();
-  // Open the database and store the reference.
-  final database = openDatabase(
-    // Set the path to the database. Note: Using the `join` function from the
-    // `path` package is best practice to ensure the path is correctly
-    // constructed for each platform.
-      join(await getDatabasesPath(), 'doggie_database.db'),
+  db = openDatabase(
+    join(await getDatabasesPath(), fridjsDbFileName),
+    onCreate: (db, version) {
+      return db.execute(
+        'CREATE TABLE fridj(id INTEGER PRIMARY KEY, name TEXT, age INTEGER)',
+      );
+    },
+    version: 1,
   );
 
   runApp(const MyApp());

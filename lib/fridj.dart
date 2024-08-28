@@ -1,9 +1,11 @@
 import 'package:fridjapp_flutter/main.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 enum Unit {
   g, kg, unit;
 }
 
+@JsonSerializable()
 class Qtty {
   Qtty({
     required this.value,
@@ -13,6 +15,7 @@ class Qtty {
   Unit u;
 }
 
+@JsonSerializable()
 class Ingredient {
   Ingredient({
     required this.name,
@@ -22,6 +25,7 @@ class Ingredient {
   Qtty qtty;
 }
 
+@JsonSerializable()
 class Fridj {
   Fridj();
 
