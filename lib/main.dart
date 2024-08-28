@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:fridjapp_flutter/fridj.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
-void main() {
+void main() async {
+  // Avoid errors caused by flutter upgrade.
+  // Importing 'package:flutter/widgets.dart' is required.
+  WidgetsFlutterBinding.ensureInitialized();
+  // Open the database and store the reference.
+  final database = openDatabase(
+    // Set the path to the database. Note: Using the `join` function from the
+    // `path` package is best practice to ensure the path is correctly
+    // constructed for each platform.
+      join(await getDatabasesPath(), 'doggie_database.db'),
+  );
+
   runApp(const MyApp());
 }
 
@@ -42,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addIngredient(Fridj f) {
     setState(() {
-      f.ingredients.add(Ingredient(name: "test", qtty: Qtty(value: 12, u: Unity.g)));
+      f.ingredients.add(Ingredient(name: "...", qtty: Qtty(value: 0, u: Unit.g)));
     });
   }
 
@@ -52,8 +65,10 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
-              Column(children: f.ingredients.map((i) => Text(i.name)).toList()),
-              TextButton(onPressed: () => _addIngredient(f), child: const Text("Add Ingredient")),
+              Column(children: f.ingredients.map((i) =>
+                  IngredientField(ingredient: i,)).toList()),
+              TextButton(onPressed: () => _addIngredient(f),
+                  child: const Text("Add Ingredient")),
             ],
           ),
         ));
@@ -81,3 +96,79 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+class IngredientField extends StatefulWidget {
+  final Ingredient ingredient;
+
+  const IngredientField({super.key, required this.ingredient});
+
+  @override
+  State<IngredientField> createState() => _IngredientFieldState();
+}
+
+class _IngredientFieldState extends State<IngredientField> {
+
+  late TextEditingController qttyCtrl;
+
+  @override
+  initState() {
+    super.initState();
+    qttyCtrl = TextEditingController(text: "what qtty");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(width: 10,),
+            Expanded(
+              child: TextField(
+                onChanged: (String value) {
+                  setState(() {
+                    widget.ingredient.name = value;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 10,),
+            Expanded(
+              child: TextField(
+                controller: qttyCtrl,
+                onChanged: (String value) {
+                  setState(() {
+                    int? iVal = int.tryParse(value);
+                    if (iVal != null) {
+                      widget.ingredient.qtty.value = iVal;
+                    }
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 10,),
+            DropdownMenu<Unit>(
+              initialSelection: Unit.g,
+              requestFocusOnTap: true,
+              label: const Text("Unit"),
+              onSelected: (value) {
+                setState(() {
+                  if (value != null) {
+                    widget.ingredient.qtty.u = value;
+                  }
+                });
+              },
+              dropdownMenuEntries: Unit.values.map<DropdownMenuEntry<Unit>>((u) =>
+                  DropdownMenuEntry(value: u, label: u.name))
+                  .toList(),)
+          ],
+        ),
+        const SizedBox(height: 30,)
+      ],
+    );
+  }
+}
+

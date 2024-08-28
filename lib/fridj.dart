@@ -1,6 +1,6 @@
 import 'package:fridjapp_flutter/main.dart';
 
-enum Unity {
+enum Unit {
   g, kg, unit;
 }
 
@@ -10,7 +10,7 @@ class Qtty {
     required this.u});
 
   int value;
-  Unity u;
+  Unit u;
 }
 
 class Ingredient {
