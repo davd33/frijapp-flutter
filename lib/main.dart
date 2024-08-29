@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:fridjapp_flutter/fridj.dart';
+import 'package:fridjapp_flutter/repository.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
-late Future<Database> db;
+late FridjRepository fridjRepository;
 
 void main() async {
   const String fridjsDbFileName = "fridjs.db";
 
   databaseFactory = databaseFactoryFfiWeb;
   WidgetsFlutterBinding.ensureInitialized();
-  db = openDatabase(
+  Database db = await openDatabase(
     join(await getDatabasesPath(), fridjsDbFileName),
     onCreate: (db, version) {
       return db.execute(
@@ -20,6 +21,8 @@ void main() async {
     },
     version: 1,
   );
+
+  fridjRepository = FridjRepository(db: db);
 
   runApp(const MyApp());
 }
@@ -61,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addIngredient(Fridj f) {
     setState(() {
-      f.ingredients.add(Ingredient(name: "...", qtty: Qtty(value: 0, u: Unit.g)));
+      f.ingredients.add(Ingredient(name: "...", qtty: 0, unit: Unit.g));
     });
   }
 
@@ -73,8 +76,18 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               Column(children: f.ingredients.map((i) =>
                   IngredientField(ingredient: i,)).toList()),
-              TextButton(onPressed: () => _addIngredient(f),
-                  child: const Text("Add Ingredient")),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(onPressed: () => _addIngredient(f),
+                      child: const Text("Add Ingredient")),
+                  TextButton(
+                      onPressed: () {
+                        fridjRepository.insertFridj(f);
+                      },
+                      child: Text('Save')),
+                ],
+              ),
             ],
           ),
         ));
@@ -149,7 +162,7 @@ class _IngredientFieldState extends State<IngredientField> {
                   setState(() {
                     int? iVal = int.tryParse(value);
                     if (iVal != null) {
-                      widget.ingredient.qtty.value = iVal;
+                      widget.ingredient.qtty = iVal;
                     }
                   });
                 },
@@ -163,13 +176,13 @@ class _IngredientFieldState extends State<IngredientField> {
               onSelected: (value) {
                 setState(() {
                   if (value != null) {
-                    widget.ingredient.qtty.u = value;
+                    widget.ingredient.unit = value;
                   }
                 });
               },
               dropdownMenuEntries: Unit.values.map<DropdownMenuEntry<Unit>>((u) =>
                   DropdownMenuEntry(value: u, label: u.name))
-                  .toList(),)
+                  .toList(),),
           ],
         ),
         const SizedBox(height: 30,)
