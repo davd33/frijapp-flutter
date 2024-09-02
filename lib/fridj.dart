@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 enum Unit {
   g, kg, unit;
 }
@@ -22,10 +24,13 @@ class Ingredient {
 
 class Fridj {
   // uniq from server
-  late int id;
+  late String id;
   List<Ingredient> ingredients = List.empty(growable: true);
+  List<Ingredient> shoppingList = List.empty(growable: true);
+  Set<String> subscribed = Set.identity();
+  String owner;
 
-  Fridj();
+  Fridj({required this.owner});
 
   Map<String, Object?> toMap() =>
       {'id': id,
